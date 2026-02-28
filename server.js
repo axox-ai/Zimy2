@@ -65,7 +65,8 @@ app.prepare().then(() => {
     })
   })
 
-  httpServer.listen(3000, () => {
-    console.log('> Ready on http://localhost:3000')
+  const port = process.env.PORT || 3000
+  httpServer.listen(port, () => {
+    console.log(`> Ready on http://localhost:${port}`)
   })
 })
