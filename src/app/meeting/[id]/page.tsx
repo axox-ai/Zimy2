@@ -177,7 +177,7 @@ export default function MeetingRoom() {
         if (!stream) return
         const newPeers: PeerData[] = []
         users.forEach(({ socketId, userName: peerName }) => {
-          const peer = createPeer(socketId, socket.id ?? '', stream!, userName)
+          const peer = createPeer(socketId, socket.id ?? '', stream, userName)
           const pd: PeerData = { peerId: socketId, peer, userName: peerName }
           peersRef.current.push(pd)
           newPeers.push(pd)
@@ -191,7 +191,7 @@ export default function MeetingRoom() {
       socket.on('user-joined', ({ socketId, userName: peerName }: { socketId: string; userName: string }) => {
         setParticipants(prev => [...prev, { socketId, userName: peerName }])
         if (!stream) return
-        const peer = createPeer(socketId, socket.id ?? '', stream!, userName)
+        const peer = createPeer(socketId, socket.id ?? '', stream, userName)
         const pd: PeerData = { peerId: socketId, peer, userName: peerName }
         peersRef.current.push(pd)
         setPeers(prev => [...prev, pd])
@@ -206,7 +206,7 @@ export default function MeetingRoom() {
           existing.peer.signal(signal)
         } else {
           if (!stream) return
-          const peer = addPeer(signal, callerId, stream!)
+          const peer = addPeer(signal, callerId, stream)
           const pd: PeerData = { peerId: callerId, peer, userName: callerName }
           peersRef.current.push(pd)
           setPeers(prev => [...prev, pd])
@@ -267,6 +267,8 @@ export default function MeetingRoom() {
         const videoTrack = localStreamRef.current.getVideoTracks()[0]
         peersRef.current.forEach(({ peer }) => {
           try {
+            // simple-peer exposes the underlying RTCPeerConnection as _pc;
+            // this is the only public-facing way to call replaceTrack for screen sharing.
             const pc = (peer as unknown as { _pc: RTCPeerConnection })._pc
             const sender = pc?.getSenders().find((s: RTCRtpSender) => s.track?.kind === 'video')
             if (sender && videoTrack) sender.replaceTrack(videoTrack)
@@ -281,6 +283,8 @@ export default function MeetingRoom() {
         const screenTrack = screenStream.getVideoTracks()[0]
         peersRef.current.forEach(({ peer }) => {
           try {
+            // simple-peer exposes the underlying RTCPeerConnection as _pc;
+            // this is the only public-facing way to call replaceTrack for screen sharing.
             const pc = (peer as unknown as { _pc: RTCPeerConnection })._pc
             const sender = pc?.getSenders().find((s: RTCRtpSender) => s.track?.kind === 'video')
             if (sender) sender.replaceTrack(screenTrack)
